@@ -1,13 +1,15 @@
 import React from "react";
 import styled from "styled-components";
 import { useController } from "react-hook-form";
-import IconEyeOpen from "../icon/IconEyeOpen";
+import { IconEyeOpen } from "../icon";
 
 const InputStyles = styled.div`
   // ?? Tại sao lại dùng styled.div mà không dùng styled.input
   // * Vì ở field password ta sẽ có con mắt để show/ unshow  và input là thẻ đóng không truyền children như div hay span được nên dùng div bọc lại
   width : 100%;
   position: relative;
+
+
   input {
     width: 100%;
     padding: ${props => props.hasIcon ? "20px 60px 20px 20px" : '20px'};
@@ -29,7 +31,9 @@ const InputStyles = styled.div`
   input::-moz-input-placeholder {
     color: #84878b;
   }
-  .icon-eye {
+
+
+  .input-icon {
     position : absolute;
     right : 20px;
     top : 50%;
@@ -37,6 +41,8 @@ const InputStyles = styled.div`
     cursor : pointer;
   }
 `;
+
+
 const Input = ({
   children,
   name = "",
@@ -45,7 +51,8 @@ const Input = ({
   control,
   ...props
 }) => {
-
+  // hasIcon để thay vì ta viết thêm 1 input password thì ta chỉ cần check xem có icon hay không rồi dùng conditional rendering
+ 
   const { field } = useController({
     control,
     name,
@@ -55,11 +62,26 @@ const Input = ({
   // * Vì ta đã dùng hook useController và lấy ra được name ở field rồi
   // * mà input ở dưới đã có {...field} có nghĩa là name đã được bung ra name = {name}
   return (
-    <InputStyles hasIcon = {hasIcon} {...props}>
+    <InputStyles hasIcon = {children ? true : false} {...props}>
+      {/* Kiểm tra nếu truyền children vào thì hasIcon là true ngược lại là false */}
       <input id={name} type={type} {...field} {...props} />
-      {hasIcon ? <IconEyeOpen className = 'icon-eye'></IconEyeOpen> : null}
+      <div className="input-icon">{children}</div>
     </InputStyles>
   );
 };
 
 export default Input;
+
+
+ // *  Mẫu useController 
+  /* 
+    const {
+    field,
+    fieldState: { invalid, isTouched, isDirty },
+    formState: { touchedFields, dirtyFields }
+  } = useController({
+    name,
+    control,
+    rules: { required: true },
+  });
+  */
