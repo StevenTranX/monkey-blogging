@@ -12,29 +12,9 @@ import { useEffect } from "react";
 import { toast } from "react-toastify";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebase/firebase-config";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { addDoc, collection } from "firebase/firestore";
-
-const SignUpPageStyles = styled.div`
-  min-height: 100vh;
-  padding: 40px;
-  .logo {
-    margin: 0 auto 20px;
-  }
-  .heading {
-    text-align: center;
-    color: ${(props) => props.theme.primary};
-    // khi muốn dùng biến primary hay secondary thì dùng như trên
-    font-weight: bold;
-    font-size: 40px;
-    margin-bottom: 60px;
-  }
-
-  .form {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-`;
+import AuthenticationPage from "./AuthenticationPage";
 
 const schema = yup.object({
   fullname: yup.string().required("Please enter your fullname"),
@@ -64,7 +44,6 @@ const SignUpPage = () => {
     setTogglePassword((prev) => !prev);
   };
   const handleSignUp = async (values) => {
-    console.log(values)
     if (!isValid) return;
 
     const user = await createUserWithEmailAndPassword(
@@ -75,19 +54,20 @@ const SignUpPage = () => {
     await updateProfile(auth.currentUser, {
       displayName: values.fullname,
     });
-    const colRef = collection(db, 'users');
+    const colRef = collection(db, "users");
     await addDoc(colRef, {
-      fullname : values.fullname,
-      email : values.email,
-      password : values.password
-    })
+      fullname: values.fullname,
+      email: values.email,
+      password: values.password,
+    });
     toast.success("Register successfully!!!");
-    navigate('/')
+    navigate("/");
   };
   // * The Object.values() method returns an array of a given object's own enumerable string-keyed property values.
   // * Phương thức Object.values(errors) này trả ra 1 mảng có chứa các values là phần tử chính.
   // * errors : { fullname : {message : 'Please enter your fullname'}. {ref : ....}, {type : 'required'}}
   // * Object.values(errors) : [{message : 'Please enter your fullname'}. {ref : ....}, {type : 'required'}}, {...}]
+
   useEffect(() => {
     const arrErrors = Object.values(errors);
     if (arrErrors.length > 0) {
@@ -97,66 +77,69 @@ const SignUpPage = () => {
       });
     }
   }, [errors]);
+  useEffect(() => {
+    document.title = "Register Page";
+  }, []);
+
   return (
-    <SignUpPageStyles>
-      <div className='container'>
-        <img srcSet='./logo.png 2x' alt='monkey-pic' className='logo' />
-        <h1 className='heading'>Monkey Blogging</h1>
-        <form
-          onSubmit={handleSubmit(handleSignUp)}
-          className='form'
-          autoComplete='off'
-        >
-          <Field className='field'>
-            <Label htmlFor='fullname'>Full name</Label>
-            <Input
-              control={control}
-              name='fullname'
-              type='text'
-              className='input'
-              placeholder='Enter your full name'
-              hasIcon
-            ></Input>
-          </Field>
-          <Field className='field'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              control={control}
-              name='email'
-              type='email'
-              className='input'
-              placeholder='Enter your email'
-              hasIcon
-            ></Input>
-          </Field>
-          <Field className='field'>
-            <Label htmlFor='password'>Password</Label>
-            <Input
-              control={control}
-              name='password'
-              type={togglePassword ? "text" : "password"}
-              className='input'
-              placeholder='Enter your password'
-              hasIcon
-            >
-              {togglePassword ? (
-                <IconEyeOpen onClick={handleTogglePassword} />
-              ) : (
-                <IconEyeClose onClick={handleTogglePassword} />
-              )}
-            </Input>
-          </Field>
-          <Button
-            type='submit'
-            style={{ maxWidth: 350, margin: "0 auto" }}
-            isLoading={isSubmitting}
-            disabled={isSubmitting}
+    <AuthenticationPage>
+      <form
+        onSubmit={handleSubmit(handleSignUp)}
+        className="form"
+        autoComplete="off"
+      >
+        <Field className="field">
+          <Label htmlFor="fullname">Full name</Label>
+          <Input
+            control={control}
+            name="fullname"
+            type="text"
+            className="input"
+            placeholder="Enter your full name"
+            hasIcon
+          ></Input>
+        </Field>
+        <Field className="field">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            control={control}
+            name="email"
+            type="email"
+            className="input"
+            placeholder="Enter your email"
+            hasIcon
+          ></Input>
+        </Field>
+        <Field className="field">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            control={control}
+            name="password"
+            type={togglePassword ? "text" : "password"}
+            className="input"
+            placeholder="Enter your password"
+            hasIcon
           >
-            Sign Up
-          </Button>
-        </form>
-      </div>
-    </SignUpPageStyles>
+            {togglePassword ? (
+              <IconEyeOpen onClick={handleTogglePassword} />
+            ) : (
+              <IconEyeClose onClick={handleTogglePassword} />
+            )}
+          </Input>
+        </Field>
+        <div className="have-account">
+          Already have an account ? <NavLink to="/sign-in">Login</NavLink>
+        </div>
+        <Button
+          type="submit"
+          style={{ maxWidth: 350, margin: "0 auto" }}
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+        >
+          Sign Up
+        </Button>
+      </form>
+    </AuthenticationPage>
   );
 };
 

@@ -1,6 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import LoadingSpinner from "../loading/LoadingSpinner";
+import PropTypes from 'prop-types'
+
 
 const ButtonStyles = styled.button`
   cursor: pointer;
@@ -30,11 +32,23 @@ const ButtonStyles = styled.button`
   }
 
 `;
-const Button = ({type = 'button' , onClick = () => {}, children,...props }) => {
+/**
+ * @param {*} onClick Handler onClick
+ * @requires
+ * @param {string} type Type of button 'button' | 'submit'
+ * @returns 
+ */
+const Button = ({type = 'button' , onClick = () => {}, children, ...props }) => {
     const {isLoading} = props
     const child = !!isLoading ? <LoadingSpinner></LoadingSpinner> : children
     // * Tạo 1 biến child để làm conditional, nếu có isLoading thì hiện loading còn không thì hiện children, và dùng biến child này để chứa -> biến child này 1 là loading 2 là children. 
-  return <ButtonStyles type = {type} onClick = {onClick}>{child}</ButtonStyles>;
+  return <ButtonStyles type = {type} onClick = {onClick} {...props}>{child}</ButtonStyles>;
 };
+Button.propTypes = {
+  type : PropTypes.oneOf(['button', 'submit']).isRequired,
+  isLoading : PropTypes.bool,
+  onClick : PropTypes.func,
+  children : PropTypes.node,
+}
 
 export default Button;
