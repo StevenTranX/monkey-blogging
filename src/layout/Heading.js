@@ -14,7 +14,7 @@ const HeadingStyles = styled.h2`
     position: absolute;
     top: 0;
     left: 0;
-    transform: translate(0, -150%);
+    transform: translate(0,-150%);
   }
 `;
 const Heading = ({ className = "", children }) => {
