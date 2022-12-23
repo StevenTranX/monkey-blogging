@@ -11,7 +11,7 @@ const menuLinks = [
 ];
 
 const HeaderStyles = styled.header`
-  padding: 40px 0px;
+  padding: 20px 0px;
   .header-main {
     display: flex;
     align-items: center;
@@ -53,6 +53,17 @@ const HeaderStyles = styled.header`
   }
   .header-button {
     margin-left: 20px;
+  }
+  @media screen and (max-width: 1023.98px) {
+    .logo {
+      max-width: 30px;
+    }
+    .menu,
+    .search,
+    .header-button,
+    .header-auth {
+      display: none;
+    }
   }
 `;
 

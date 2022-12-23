@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Input } from '../components/input';
-import { Label } from '../components/label';
-import { useForm } from 'react-hook-form';
-import { IconEyeClose, IconEyeOpen } from '../components/icon';
-import { Field } from '../components/field';
-import { Button } from '../components/button';
-import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useEffect } from 'react';
-import { toast } from 'react-toastify';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '../firebase/firebase-config';
-import { NavLink, useNavigate } from 'react-router-dom';
 import { addDoc, collection } from 'firebase/firestore';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import * as yup from 'yup';
+import { Button } from '../components/button';
+import { Field } from '../components/field';
+import { Input } from '../components/input';
+import InputPasswordToggle from '../components/input/InputPasswordToggle';
+import { Label } from '../components/label';
+import { auth, db } from '../firebase/firebase-config';
 import AuthenticationPage from './AuthenticationPage';
 
 const schema = yup.object({
@@ -29,7 +27,6 @@ const schema = yup.object({
 
 const SignUpPage = () => {
   const navigate = useNavigate();
-  const [togglePassword, setTogglePassword] = useState(false);
   const {
     control,
     handleSubmit,
@@ -40,9 +37,6 @@ const SignUpPage = () => {
     mode: 'onChange',
   });
 
-  const handleTogglePassword = () => {
-    setTogglePassword((prev) => !prev);
-  };
   const handleSignUp = async (values) => {
     if (!isValid) return;
 
@@ -112,20 +106,7 @@ const SignUpPage = () => {
         </Field>
         <Field className='field'>
           <Label htmlFor='password'>Password</Label>
-          <Input
-            control={control}
-            name='password'
-            type={togglePassword ? 'text' : 'password'}
-            className='input'
-            placeholder='Enter your password'
-            hasIcon
-          >
-            {togglePassword ? (
-              <IconEyeOpen onClick={handleTogglePassword} />
-            ) : (
-              <IconEyeClose onClick={handleTogglePassword} />
-            )}
-          </Input>
+          <InputPasswordToggle control = {control}></InputPasswordToggle>
         </Field>
         <div className='have-account'>
           Already have an account ? <NavLink to='/sign-in'>Login</NavLink>

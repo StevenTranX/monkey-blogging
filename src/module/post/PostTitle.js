@@ -7,6 +7,7 @@ const PostTitleStyles = styled.h3`
   font-weight: bold;
   line-height: 1.5;
   display : block;
+  letter-spacing: 0.25px;
   
   a {
     display : block;
@@ -14,9 +15,15 @@ const PostTitleStyles = styled.h3`
   
   ${props => props.size === 'normal' && css`
     font-size: 18px;
+    @media screen and (max-width: 1023.98px) {
+        font-size: 14px;
+      }
   `};
   ${props => props.size === 'big' && css`
     font-size: 22px;
+    @media screen and (max-width: 1023.98px) {
+        font-size: 16px;
+      }
   `};
 `;
 

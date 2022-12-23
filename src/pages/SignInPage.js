@@ -7,8 +7,8 @@ import { toast } from 'react-toastify';
 import * as yup from 'yup';
 import { Button } from '../components/button';
 import { Field } from '../components/field';
-import { IconEyeClose, IconEyeOpen } from '../components/icon';
 import { Input } from '../components/input';
+import InputPasswordToggle from '../components/input/InputPasswordToggle';
 import { Label } from '../components/label';
 import { useAuth } from '../contexts/authContext';
 import { auth } from '../firebase/firebase-config';
@@ -80,18 +80,7 @@ const SignInPage = (props) => {
         </Field>
         <Field>
           <Label htmlFor='password'>Enter your password</Label>
-          <Input
-            type={togglePassword ? 'text' : 'password'}
-            control={control}
-            name='password'
-            placeholder='Enter your password'
-          >
-            {togglePassword ? (
-              <IconEyeOpen onClick={handleTogglePassword} />
-            ) : (
-              <IconEyeClose onClick={handleTogglePassword} />
-            )}
-          </Input>
+          <InputPasswordToggle control = {control}></InputPasswordToggle>
         </Field>
         <div className='have-account'>
           Already have not had an account ?{' '}

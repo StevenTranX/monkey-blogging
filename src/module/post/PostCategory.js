@@ -28,6 +28,9 @@ const PostCategoryStyles = styled.div`
     css`
       background-color: white;
     `};
+    @media screen and (max-width: 1023.98px) {
+    font-size: 10px;
+  }
 `;
 
 const PostCategory = ({ children, type = "primary", className, to = "/" }) => {
