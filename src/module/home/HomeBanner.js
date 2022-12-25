@@ -35,6 +35,7 @@ const HomeBannerStyles = styled.div`
       &-heading {
         font-size: 30px;
         margin-bottom: 10px;
+        font-weight: bold;
       }
       &-desc {
         font-size: 14px;
