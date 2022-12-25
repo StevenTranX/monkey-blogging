@@ -7,6 +7,7 @@ slug
 image
 createAt
 status : 1(approved) 2(pending) 3(reject)
+hot - bool
 content: html nhưng convert sang json string rồi đưa ra ngoài parse ra html
 userId
 categoryId

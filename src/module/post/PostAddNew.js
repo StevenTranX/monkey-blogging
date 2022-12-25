@@ -1,27 +1,31 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import styled from "styled-components";
-import { Button } from "../../components/button";
-import { Dropdown } from "../../components/dropdown";
-import { Field } from "../../components/field";
-import { Input } from "../../components/input";
-import { Label } from "../../components/label";
-import Radio from "../../components/radio/Radio";
-import slugify from "slugify";
-import { postStatus } from "../../utils/constants";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import {
+  deleteObject,
+  getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
 } from "firebase/storage";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import slugify from "slugify";
+import styled from "styled-components";
+
+import { Button } from "../../components/button";
+import { Dropdown } from "../../components/dropdown";
+import { Field } from "../../components/field";
 import ImageUpload from "../../components/image/ImageUpload";
-import { useState } from "react";
-import { addDoc, collection, deleteDoc } from "firebase/firestore";
+import { Input } from "../../components/input";
+import { Label } from "../../components/label";
+import Radio from "../../components/radio/Radio";
+import Toggle from "../../components/toggle/Toggle";
 import { db } from "../../firebase/firebase-config";
+import useFirebaseImage from "../../hooks/useFirebaseImage";
+import { postStatus } from "../../utils/constants";
+
 const PostAddNewStyles = styled.div``;
+
 const PostAddNew = () => {
   const { control, watch, setValue, handleSubmit, getValues } = useForm({
     mode: "onChange",
@@ -29,18 +33,21 @@ const PostAddNew = () => {
       title: "",
       slug: "",
       status: 2,
-      category: "",
+      categoryId: "",
+      hot: false,
     },
   });
+  const [categories, setCategories] = useState([]);
+
   const watchStatus = watch("status");
   const watchCategory = watch("category");
-  const storage = getStorage();
-  const [progress, setProgress] = useState(0);
-  const [image, setImage] = useState("");
+  const watchHot = watch("hot");
+
   const addPostHandler = async (values) => {
     const cloneValues = { ...values };
     cloneValues.slug = slugify(cloneValues.title || cloneValues.slug);
     cloneValues.status = Number(cloneValues.status);
+    // * Hàm addPostHandler này mục đích để xử lý về onSubmit ( vẫn chưa hoàn thiện ....)
     // const colRef = collection(db, 'posts');
     // await addDoc(colRef,{
     //   image,
@@ -48,72 +55,26 @@ const PostAddNew = () => {
     // })
     // handleUploadImage(values.image);
   };
-  const handleUploadImage = (file) => {
-    const storageRef = ref(storage, "images/" + file.name);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progressPercent =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        // progress 5% 10% 15 %
-        setProgress(progressPercent);
-        switch (snapshot.state) {
-          case "paused":
-            console.log("Upload is paused");
-            break;
-          case "running":
-            console.log("Upload is running");
-            break;
-          default:
-            console.log("Nothing at all");
-        }
-      },
-      (error) => {
-        // A full list of error codes is available at
-        // https://firebase.google.com/docs/storage/web/handle-errors
-        switch (error.code) {
-          case "storage/unauthorized":
-            toast("Unauthorized");
-            break;
-          case "storage/canceled":
-            toast("Canceled");
-            break;
-          case "storage/unknown":
-            toast("Unknown Error");
-            break;
-          default:
-            console.log("nothing at all");
-        }
-      },
-      () => {
-        // Upload completed successfully, now we can get the download URL
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setImage(downloadURL);
-        });
-      }
-    );
-  };
-  // * dùng hàm này khi submit
-  const onSelectImage = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setValue("image_name", file.name);
-    handleUploadImage(file);
-  };
-  const handleDeleteImage = async () => {
-    const storage = getStorage();
-    const desertRef = ref(storage, `images/${getValues("image_name")}`);
-    await deleteObject(desertRef)
-      .then(() => {
-        toast("File Deleted Successfully");
-        setImage('')
-        setProgress(0)
-      })
-      .catch(() => {
-        toast("Oops! an error occurred");
+
+  const { image, progress, handleSelectImage, handleDeleteImage } =
+    useFirebaseImage(setValue, getValues);
+  useEffect(() => {
+    async function getData() {
+      const colRef = collection(db, "categories");
+      const q = query(colRef, where("status", "==", 1));
+      const querySnapshot = await getDocs(q);
+      console.log(querySnapshot)
+      let result = []
+      querySnapshot.forEach((doc) => {
+        result.push({
+          id : doc.id,
+          ...doc.data(),
+        })
+        setCategories(result)
       });
-  };
+    }
+    getData();
+  }, []);
   return (
     <PostAddNewStyles>
       <h1 className="dashboard-heading">Add new post</h1>
@@ -136,17 +97,29 @@ const PostAddNew = () => {
               name="slug"
             ></Input>
           </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-x-10 mb-10">
           <Field>
             <Label>Image</Label>
             <ImageUpload
               handleDeleteImage={handleDeleteImage}
               type="file"
-              onChange={onSelectImage}
+              onChange={handleSelectImage}
               className="h-[250px]"
               name="image"
               progress={progress}
               image={image}
             />
+          </Field>
+          <Field>
+            <Label>Category</Label>
+            <Dropdown>
+              <Dropdown.Option>Knowledge</Dropdown.Option>
+              <Dropdown.Option>Blockchain</Dropdown.Option>
+              <Dropdown.Option>Setup</Dropdown.Option>
+              <Dropdown.Option>Nature</Dropdown.Option>
+              <Dropdown.Option>Developer</Dropdown.Option>
+            </Dropdown>
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-x-10 mb-10">
@@ -182,21 +155,14 @@ const PostAddNew = () => {
             </div>
           </Field>
           <Field>
-            <Label>Author</Label>
-            <Input control={control} placeholder="Find the author"></Input>
+            <Label>Feature Post</Label>
+            <Toggle
+              on={watchHot === true}
+              onClick={() => setValue("hot", !watchHot)}
+            ></Toggle>
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-x-10 mb-10">
-          <Field>
-            <Label>Category</Label>
-            <Dropdown>
-              <Dropdown.Option>Knowledge</Dropdown.Option>
-              <Dropdown.Option>Blockchain</Dropdown.Option>
-              <Dropdown.Option>Setup</Dropdown.Option>
-              <Dropdown.Option>Nature</Dropdown.Option>
-              <Dropdown.Option>Developer</Dropdown.Option>
-            </Dropdown>
-          </Field>
           <Field></Field>
         </div>
         <Button type="submit" className="mx-auto">
