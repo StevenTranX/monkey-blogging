@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import {
   deleteObject,
   getDownloadURL,
@@ -20,6 +20,7 @@ import { Input } from "../../components/input";
 import { Label } from "../../components/label";
 import Radio from "../../components/radio/Radio";
 import Toggle from "../../components/toggle/Toggle";
+import { useAuth } from "../../contexts/authContext";
 import { db } from "../../firebase/firebase-config";
 import useFirebaseImage from "../../hooks/useFirebaseImage";
 import { postStatus } from "../../utils/constants";
@@ -27,7 +28,7 @@ import { postStatus } from "../../utils/constants";
 const PostAddNewStyles = styled.div``;
 
 const PostAddNew = () => {
-  const { control, watch, setValue, handleSubmit, getValues } = useForm({
+  const { control, watch, setValue, handleSubmit, getValues, reset } = useForm({
     mode: "onChange",
     defaultValues: {
       title: "",
@@ -35,19 +36,48 @@ const PostAddNew = () => {
       status: 2,
       categoryId: "",
       hot: false,
+      image: "",
     },
   });
-  const [categories, setCategories] = useState([]);
+  const { image, progress, handleSelectImage, handleDeleteImage } =
+    useFirebaseImage(setValue, getValues);
+  const { userInfo } = useAuth();
 
+  const [categories, setCategories] = useState([]);
+  const [selectCategory, setSelectCategory] = useState("");
   const watchStatus = watch("status");
   const watchCategory = watch("category");
   const watchHot = watch("hot");
 
   const addPostHandler = async (values) => {
     const cloneValues = { ...values };
-    cloneValues.slug = slugify(cloneValues.title || cloneValues.slug);
-    cloneValues.status = Number(cloneValues.status);
+    cloneValues.slug = slugify(values.title || values.slug, {
+      lower: true,
+    });
+    cloneValues.status = Number(values.status);
     // * Hàm addPostHandler này mục đích để xử lý về onSubmit ( vẫn chưa hoàn thiện ....)
+    const colRef = collection(db, "posts");
+    await addDoc(colRef, {
+      // title : cloneValues.title,
+      // slug : cloneValues.slug,
+      // hot : cloneValues.hot,
+      // status : cloneValues.status,
+      // categoryId : cloneValues.categoryId,
+      ...cloneValues,
+      image,
+      userId: userInfo.uid,
+    });
+    console.log();
+    toast.success("Create new post successfully");
+    reset({
+      title: "",
+      slug: "",
+      status: 2,
+      categoryId: "",
+      hot: false,
+      image: "",
+    });
+    setSelectCategory({})
     // const colRef = collection(db, 'posts');
     // await addDoc(colRef,{
     //   image,
@@ -55,37 +85,38 @@ const PostAddNew = () => {
     // })
     // handleUploadImage(values.image);
   };
+  const handleClickOption = (item) => {
+    setValue("categoryId", item.id);
+    setSelectCategory(item);
+  };
 
-  const { image, progress, handleSelectImage, handleDeleteImage } =
-    useFirebaseImage(setValue, getValues);
   useEffect(() => {
     async function getData() {
       const colRef = collection(db, "categories");
       const q = query(colRef, where("status", "==", 1));
       const querySnapshot = await getDocs(q);
-      console.log(querySnapshot)
-      let result = []
+      let result = [];
       querySnapshot.forEach((doc) => {
         result.push({
-          id : doc.id,
+          id: doc.id,
           ...doc.data(),
-        })
-        setCategories(result)
+        });
+        setCategories(result);
       });
     }
     getData();
   }, []);
   return (
     <PostAddNewStyles>
-      <h1 className="dashboard-heading">Add new post</h1>
+      <h1 className='dashboard-heading'>Add new post</h1>
       <form onSubmit={handleSubmit(addPostHandler)}>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className='grid grid-cols-2 gap-x-10 mb-10'>
           <Field>
             <Label>Title</Label>
             <Input
               control={control}
-              placeholder="Enter your title"
-              name="title"
+              placeholder='Enter your title'
+              name='title'
               required
             ></Input>
           </Field>
@@ -93,20 +124,19 @@ const PostAddNew = () => {
             <Label>Slug</Label>
             <Input
               control={control}
-              placeholder="Enter your slug"
-              name="slug"
+              placeholder='Enter your slug'
+              name='slug'
             ></Input>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className='grid grid-cols-2 gap-x-10 mb-10'>
           <Field>
             <Label>Image</Label>
             <ImageUpload
               handleDeleteImage={handleDeleteImage}
-              type="file"
+              type='file'
               onChange={handleSelectImage}
-              className="h-[250px]"
-              name="image"
+              className='h-[250px]'
               progress={progress}
               image={image}
             />
@@ -114,20 +144,36 @@ const PostAddNew = () => {
           <Field>
             <Label>Category</Label>
             <Dropdown>
-              <Dropdown.Option>Knowledge</Dropdown.Option>
-              <Dropdown.Option>Blockchain</Dropdown.Option>
-              <Dropdown.Option>Setup</Dropdown.Option>
-              <Dropdown.Option>Nature</Dropdown.Option>
-              <Dropdown.Option>Developer</Dropdown.Option>
+              <Dropdown.Select
+                placeholder={`${
+                  "Please select categories " || selectCategory.name
+                }`}
+              ></Dropdown.Select>
+              <Dropdown.List>
+                {categories.length > 0 &&
+                  categories.map((item) => (
+                    <Dropdown.Option
+                      key={item.id}
+                      onClick= { () => handleClickOption(item)}
+                    >
+                      {item.name}
+                    </Dropdown.Option>
+                  ))}
+              </Dropdown.List>
             </Dropdown>
+            {selectCategory?.name && (
+              <span className='inline-block p-4 rounded-lg bg-green-100 text-sm text-green-500 font-medium'>
+                {selectCategory.name}
+              </span>
+            )}
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className='grid grid-cols-2 gap-x-10 mb-10'>
           <Field>
             <Label>Status</Label>
-            <div className="flex items-center gap-x-5">
+            <div className='flex items-center gap-x-5'>
               <Radio
-                name="status"
+                name='status'
                 control={control}
                 checked={+watchStatus === postStatus.APPROVED}
                 value={postStatus.APPROVED}
@@ -135,7 +181,7 @@ const PostAddNew = () => {
                 Approved
               </Radio>
               <Radio
-                name="status"
+                name='status'
                 control={control}
                 checked={+watchStatus === postStatus.PENDING}
                 value={postStatus.PENDING}
@@ -143,7 +189,7 @@ const PostAddNew = () => {
                 Pending
               </Radio>
               <Radio
-                name="status"
+                name='status'
                 control={control}
                 checked={+watchStatus === postStatus.REJECTED}
                 // watchStatus tự động convert number sang string '3' nên ta để dấu + để convert sang number
@@ -162,10 +208,10 @@ const PostAddNew = () => {
             ></Toggle>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className='grid grid-cols-2 gap-x-10 mb-10'>
           <Field></Field>
         </div>
-        <Button type="submit" className="mx-auto">
+        <Button type='submit' className='mx-auto'>
           Add new post
         </Button>
       </form>

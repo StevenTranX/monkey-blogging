@@ -15,7 +15,7 @@ export default function useFirebaseImage(setValue , getValues) {
   if (!setValue || !getValues) return;
   const handleUploadImage = (file) => {
     const storageRef = ref(storage, `images/${file.name}`);
-    // storageRef này dùng hàm ref để trả ra StorageReference ( 2 tham số là FirebaseStorage và url)
+    // storageRef này dùng hàm ref để truy cập vào storage trong firebase ( 2 tham số là FirebaseStorage và url)
     const uploadTask = uploadBytesResumable(storageRef, file);
     // hàm này dùng để upload file lên đường dẫn của storageRef
     // * Dưới đây là onStateChange và progress để lấy được phần trăm upload
@@ -73,22 +73,22 @@ export default function useFirebaseImage(setValue , getValues) {
 
   const handleDeleteImage = async () => {
     const storage = getStorage();
-    const desertRef = ref(storage, `images/${getValues("image_name")}`);
-    await deleteObject(desertRef)
+    const imageRef = ref(storage, `images/${getValues("image_name")}`);
+    await deleteObject(imageRef)
       .then(() => {
         toast("File Deleted Successfully");
         setImage("");
         setProgress(0);
       })
-      .catch(() => {
+      .catch((error) => {
         toast("Oops! an error occurred");
+        console.log(error);
       });
   };
   return {
     progress,
     image,
     handleSelectImage,
-    handleUploadImage,
     handleDeleteImage,
   };
 }
