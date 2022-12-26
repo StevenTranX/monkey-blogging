@@ -1,10 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import slugify from 'slugify';
 import * as yup from 'yup';
 import { Button } from '../components/button';
 import { Field } from '../components/field';
@@ -49,11 +50,22 @@ const SignUpPage = () => {
       displayName: values.fullname,
     });
     const colRef = collection(db, 'users');
-    await addDoc(colRef, {
+    /* 
+     ! Ở đây có 1 bug quan trọng, khi ta làm chức năng author name 
+     ( nghĩa là khi ta đăng bài viết mới, ta muốn lấy userId của người đăng nhập
+      để hiện tên người đăng bài viết thì sẽ ra undefined )
+      ! undefined bởi vì firebase sẽ tự generate ra 1 cái id khi ta chỉ dùng addDoc bình thường
+      ! cho nên ta phải dùng hàm setDoc để customize lại userId trùng với user đăng bài
+    */
+    await setDoc(doc(db, 'users', auth.currentUser.uid), {
       fullname: values.fullname,
       email: values.email,
       password: values.password,
-    });
+      username : slugify(values.fullname, {lower : true})
+    })
+    // await addDoc(colRef, {
+   
+    // });
     toast.success('Register successfully!!!');
     navigate('/');
   };

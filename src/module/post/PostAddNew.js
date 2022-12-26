@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
 import {
   deleteObject,
   getDownloadURL,
@@ -39,51 +39,57 @@ const PostAddNew = () => {
       image: "",
     },
   });
-  const { image, progress, handleSelectImage, handleDeleteImage } =
+  const { image, progress, handleSelectImage, handleDeleteImage, handleResetUpload } =
     useFirebaseImage(setValue, getValues);
   const { userInfo } = useAuth();
 
   const [categories, setCategories] = useState([]);
   const [selectCategory, setSelectCategory] = useState("");
+  const [loading, setLoading] = useState(false)
+
   const watchStatus = watch("status");
   const watchCategory = watch("category");
   const watchHot = watch("hot");
 
   const addPostHandler = async (values) => {
-    const cloneValues = { ...values };
-    cloneValues.slug = slugify(values.title || values.slug, {
-      lower: true,
-    });
-    cloneValues.status = Number(values.status);
-    // * Hàm addPostHandler này mục đích để xử lý về onSubmit ( vẫn chưa hoàn thiện ....)
-    const colRef = collection(db, "posts");
-    await addDoc(colRef, {
-      // title : cloneValues.title,
-      // slug : cloneValues.slug,
-      // hot : cloneValues.hot,
-      // status : cloneValues.status,
-      // categoryId : cloneValues.categoryId,
-      ...cloneValues,
-      image,
-      userId: userInfo.uid,
-    });
-    console.log();
-    toast.success("Create new post successfully");
-    reset({
-      title: "",
-      slug: "",
-      status: 2,
-      categoryId: "",
-      hot: false,
-      image: "",
-    });
-    setSelectCategory({})
-    // const colRef = collection(db, 'posts');
-    // await addDoc(colRef,{
-    //   image,
-    //   ...
-    // })
-    // handleUploadImage(values.image);
+    setLoading(true)
+    try {
+      const cloneValues = { ...values };
+      cloneValues.slug = slugify(values.title || values.slug, {
+        lower: true,
+      });
+      cloneValues.status = Number(values.status);
+      // * Hàm addPostHandler này mục đích để xử lý về onSubmit ( vẫn chưa hoàn thiện ....)
+      const colRef = collection(db, "posts");
+      await addDoc(colRef, {
+        // title : cloneValues.title,
+        // slug : cloneValues.slug,
+        // hot : cloneValues.hot,
+        // status : cloneValues.status,
+        // categoryId : cloneValues.categoryId,
+        ...cloneValues,
+        image,
+        userId: userInfo.uid,
+        createdAt : serverTimestamp(),
+      });
+      console.log();
+      toast.success("Create new post successfully");
+      reset({
+        title: "",
+        slug: "",
+        status: 2,
+        categoryId: "",
+        hot: false,
+        image: "",
+      });
+      setSelectCategory({})
+      handleResetUpload()
+    } catch (error) {
+      setLoading(false)
+    } finally {
+      setLoading(false)
+   }
+
   };
   const handleClickOption = (item) => {
     setValue("categoryId", item.id);
@@ -106,6 +112,9 @@ const PostAddNew = () => {
     }
     getData();
   }, []);
+  useEffect( () => {
+    document.title = 'Monkey blogging - Add new post'
+  }, [])
   return (
     <PostAddNewStyles>
       <h1 className='dashboard-heading'>Add new post</h1>
@@ -211,7 +220,7 @@ const PostAddNew = () => {
         <div className='grid grid-cols-2 gap-x-10 mb-10'>
           <Field></Field>
         </div>
-        <Button type='submit' className='mx-auto'>
+        <Button type='submit' className='mx-auto w-[250px]' isLoading = {loading} disabled = {loading}>
           Add new post
         </Button>
       </form>

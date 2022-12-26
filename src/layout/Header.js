@@ -79,7 +79,7 @@ function getLastName(name) {
 
 const Header = (props) => {
   const { userInfo } = useAuth();
-
+  console.log(userInfo);
   return (
     <HeaderStyles>
       <div className='container'>
@@ -146,7 +146,7 @@ const Header = (props) => {
           ) : (
             <div className='header-auth'>
               <span>Welcome back !!</span>
-              <strong>{getLastName(userInfo?.displayName)}</strong>
+              <strong className='text-green-600' > {userInfo.displayName}</strong>
             </div>
           )}
         </div>
